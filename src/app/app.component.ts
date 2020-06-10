@@ -61,6 +61,7 @@ export class AppComponent implements OnInit {
     }
 
     this.socket.on('ready', async (id) => {
+      
       const peerConnection = new RTCPeerConnection(this.config);
       this.peerConnections[id] = peerConnection;
 
@@ -71,8 +72,7 @@ export class AppComponent implements OnInit {
             .getTracks()
             .forEach((track) => peerConnection.addTrack(track, stream));
         });
-      //peerConnection.createDataChannel(this.myVideo.nativeElement.srcObject.toString());
-
+      
       peerConnection
         .createOffer()
         .then((sdp) => peerConnection.setLocalDescription(sdp))
@@ -85,7 +85,7 @@ export class AppComponent implements OnInit {
 
       peerConnection.ontrack = (event) =>
         handleRemoteStreamAdded(event.streams[0], id);
-        
+
       peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
           this.socket.emit('candidate', { id, message: event.candidate });
@@ -94,15 +94,16 @@ export class AppComponent implements OnInit {
     });
 
     const handleRemoteHangup = (id) => {
+      this.remotePeers = this.remotePeers.filter(
+        (remotePeer) => id !== remotePeer.peerId
+      );
       this.peerConnections[id] && this.peerConnections[id].close();
       delete this.peerConnections[id];
-      this.remotePeers = this.remotePeers.filter(
-        (remotePeer) => this.peerConnections[id] != remotePeer.peerId
-      );
     };
 
     const handleRemoteStreamAdded = (stream, id) => {
-      this.remotePeers.push({ peerId: id, stream: stream });
+      const matchedIndex = this.remotePeers.findIndex(peer => peer.peerId === id);
+      (matchedIndex === -1) && this.remotePeers.push({ peerId: id, stream: stream });
     };
 
     this.socket.on('offer', async (id, description) => {
@@ -116,7 +117,6 @@ export class AppComponent implements OnInit {
             .forEach((track) => peerConnection.addTrack(track, stream));
         });
 
-      // peerConnection.createDataChannel(this.myVideo.nativeElement.srcObject.toString());
       peerConnection
         .setRemoteDescription(description)
         .then(() => peerConnection.createAnswer())
