@@ -3,7 +3,7 @@ import { NgModule } from '@angular/core';
 import { SocketIoModule, SocketIoConfig } from 'ngx-socket-io';
 import { AppComponent } from './app.component';
 
-const config: SocketIoConfig = { url: 'http://localhost:3100', options: {}  };
+const config: SocketIoConfig = { url: 'https://node-video-server.herokuapp.com/', options: {}  };
 @NgModule({
   declarations: [
     AppComponent
