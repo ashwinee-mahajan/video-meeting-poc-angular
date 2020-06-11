@@ -4,14 +4,12 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "predeploy": "ng build",
-    "deploy": "gh-pages -d build",
-    "start": "ng serve",
-    "serve": "nodemon server.js",
+    "start": "node server.js",
     "build": "ng build",
     "test": "ng test",
     "lint": "ng lint",
-    "e2e": "ng e2e"
+    "e2e": "ng e2e",
+    "postinstall": "ng build --output-path dist"
   },
   "private": true,
   "dependencies": {
