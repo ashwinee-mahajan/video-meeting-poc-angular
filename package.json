@@ -4,6 +4,8 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
+    "predeploy": "ng build",
+    "deploy": "gh-pages -d build",
     "start": "ng serve",
     "serve": "nodemon server.js",
     "build": "ng build",
