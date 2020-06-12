@@ -9,7 +9,7 @@
 <div class="row flex-nowrap room-members">
   <div class="col" *ngFor="let remotePeer of remotePeers">
     <div>User {{remotePeer?.peerId}} </div>
-      <video [id]="remotePeer?.peerId" class="border border-danger w-100 h-100" autoplay playsinline [srcObject]="(remotePeer?.stream)">
+      <video [id]="remotePeer?.peerId" class="border border-danger w-100 h-100" autoplay controls playsinline [srcObject]="(remotePeer?.stream)">
         
       </video>
   </div>
