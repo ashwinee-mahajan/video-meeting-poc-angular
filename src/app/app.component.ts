@@ -34,7 +34,7 @@ export class AppComponent implements OnInit {
 
   /** @type {MediaStreamConstraints} */
   constraints = {
-    audio: true,
+    // audio: true,
     video: { facingMode: 'user' },
   };
 
