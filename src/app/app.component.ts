@@ -51,7 +51,6 @@ export class AppComponent implements OnInit {
       .getUserMedia(this.constraints)
       .then((stream) => {
         this.myVideo.nativeElement.srcObject = stream;
-        this.myVideo.nativeElement.play();
         this.socket.emit('ready');
       })
       .catch(getUserMediaError);
@@ -60,19 +59,12 @@ export class AppComponent implements OnInit {
       console.error(error);
     }
 
-    this.socket.on('ready', async (id) => {
-      
+    this.socket.on('ready', async (id) => {      
       const peerConnection = new RTCPeerConnection(this.config);
       this.peerConnections[id] = peerConnection;
-
-      await navigator.mediaDevices
-        .getUserMedia(this.constraints)
-        .then((stream) => {
-          stream
-            .getTracks()
-            .forEach((track) => peerConnection.addTrack(track, stream));
-        });
-      
+      let stream = this.myVideo.nativeElement.srcObject;
+      (<MediaStream>stream).getTracks().forEach(track => peerConnection.addTrack(track, <MediaStream>stream));
+           
       peerConnection
         .createOffer()
         .then((sdp) => peerConnection.setLocalDescription(sdp))
@@ -82,9 +74,6 @@ export class AppComponent implements OnInit {
             message: peerConnection.localDescription,
           });
         });
-
-      peerConnection.ontrack = (event) =>
-        handleRemoteStreamAdded(event.streams[0], id);
 
       peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
@@ -103,20 +92,13 @@ export class AppComponent implements OnInit {
 
     const handleRemoteStreamAdded = (stream, id) => {
       const matchedIndex = this.remotePeers.findIndex(peer => peer.peerId === id);
-      (matchedIndex === -1) && this.remotePeers.push({ peerId: id, stream: stream });
+      (matchedIndex === -1) && 
+      this.remotePeers.push({ peerId: id, stream: stream });
     };
 
     this.socket.on('offer', async (id, description) => {
       const peerConnection = new RTCPeerConnection(this.config);
       this.peerConnections[id] = peerConnection;
-      await navigator.mediaDevices
-        .getUserMedia(this.constraints)
-        .then((stream) => {
-          stream
-            .getTracks()
-            .forEach((track) => peerConnection.addTrack(track, stream));
-        });
-
       peerConnection
         .setRemoteDescription(description)
         .then(() => peerConnection.createAnswer())
