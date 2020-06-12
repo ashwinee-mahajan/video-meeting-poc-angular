@@ -48,7 +48,6 @@ export class AppComponent implements OnInit {
       this.socket.emit('join', this.room);
     }
 
-    if(this.myVideo.nativeElement.srcObject) {
       navigator.mediaDevices
       .getUserMedia(this.constraints)
       .then((stream) => {
@@ -56,11 +55,7 @@ export class AppComponent implements OnInit {
         this.socket.emit('ready');
       })
       .catch(getUserMediaError);
-    }else {
-      this.socket.emit('ready');
-    }
-
-    
+       
 
     function getUserMediaError(error) {
       console.error(error);
