@@ -7,6 +7,7 @@ import {
   QueryList,
 } from '@angular/core';
 import { Socket } from 'ngx-socket-io';
+import { IfStmt } from '@angular/compiler';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -34,7 +35,7 @@ export class AppComponent implements OnInit {
 
   /** @type {MediaStreamConstraints} */
   constraints = {
-    // audio: true,
+    audio: true,
     video: { facingMode: 'user' },
   };
 
@@ -47,13 +48,19 @@ export class AppComponent implements OnInit {
       this.socket.emit('join', this.room);
     }
 
-    navigator.mediaDevices
+    if(this.myVideo.nativeElement.srcObject) {
+      navigator.mediaDevices
       .getUserMedia(this.constraints)
       .then((stream) => {
         this.myVideo.nativeElement.srcObject = stream;
         this.socket.emit('ready');
       })
       .catch(getUserMediaError);
+    }else {
+      this.socket.emit('ready');
+    }
+
+    
 
     function getUserMediaError(error) {
       console.error(error);
