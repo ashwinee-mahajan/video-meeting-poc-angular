@@ -35,8 +35,8 @@ export class AppComponent implements OnInit {
 
   /** @type {MediaStreamConstraints} */
   constraints = {
-    audio: {'echoCancellation': true},
-    video: { facingMode: 'user' },
+    audio: true,
+    video: true,
   };
 
   peerConnections = {};
@@ -45,41 +45,47 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     if (this.room && !!this.room) {
-      this.socket.emit('join', this.room);
+      this.socket.emit("join", this.room);
     }
 
-      navigator.mediaDevices
+    navigator.mediaDevices
       .getUserMedia(this.constraints)
       .then((stream) => {
         this.myVideo.nativeElement.srcObject = stream;
-        this.socket.emit('ready');
+        this.myVideo.nativeElement.play();
+        this.socket.emit("ready");
       })
       .catch(getUserMediaError);
-       
 
     function getUserMediaError(error) {
       console.error(error);
     }
 
-    this.socket.on('ready', async (id) => {      
+    this.socket.on("ready", async (id) => {
       const peerConnection = new RTCPeerConnection(this.config);
       this.peerConnections[id] = peerConnection;
+
       let stream = this.myVideo.nativeElement.srcObject;
-      (<MediaStream>stream).getTracks().forEach(track => peerConnection.addTrack(track, <MediaStream>stream));
-           
+      if (this.myVideo.nativeElement instanceof HTMLVideoElement) {
+        (<MediaStream>stream).getTracks().forEach(track => peerConnection.addTrack(track, <MediaStream>stream));
+      }
+
       peerConnection
         .createOffer()
         .then((sdp) => peerConnection.setLocalDescription(sdp))
         .then(() => {
-          this.socket.emit('offer', {
+          this.socket.emit("offer", {
             id,
             message: peerConnection.localDescription,
           });
         });
 
+      peerConnection.ontrack = (event) =>
+        handleRemoteStreamAdded(event.streams[0], id);
+
       peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-          this.socket.emit('candidate', { id, message: event.candidate });
+          this.socket.emit("candidate", { id, message: event.candidate });
         }
       };
     });
@@ -93,48 +99,54 @@ export class AppComponent implements OnInit {
     };
 
     const handleRemoteStreamAdded = (stream, id) => {
-      const matchedIndex = this.remotePeers.findIndex(peer => peer.peerId === id);
-      (matchedIndex === -1) && 
-      this.remotePeers.push({ peerId: id, stream: stream });
+      const matchedIndex = this.remotePeers.findIndex(
+        (peer) => peer.peerId === id
+      );
+      matchedIndex === -1 &&
+        this.remotePeers.push({ peerId: id, stream: stream });
     };
 
-    this.socket.on('offer', async (id, description) => {
+    this.socket.on("offer", async (id, description) => {
       const peerConnection = new RTCPeerConnection(this.config);
       this.peerConnections[id] = peerConnection;
+      let stream = this.myVideo.nativeElement.srcObject;
+      if (this.myVideo.nativeElement instanceof HTMLVideoElement) {
+        (<MediaStream>stream).getTracks().forEach(track => peerConnection.addTrack(track, <MediaStream>stream));
+      }
+
       peerConnection
         .setRemoteDescription(description)
         .then(() => peerConnection.createAnswer())
         .then((sdp) => peerConnection.setLocalDescription(sdp))
         .then(() => {
-          this.socket.emit('answer', {
+          this.socket.emit("answer", {
             id,
             message: peerConnection.localDescription,
           });
         });
-      peerConnection.ontrack = (event) =>
-        handleRemoteStreamAdded(event.streams[0], id);
+      peerConnection.ontrack = (event) => handleRemoteStreamAdded(event.streams[0], id);
       peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-          this.socket.emit('candidate', { id, message: event.candidate });
+          this.socket.emit("candidate", { id, message: event.candidate });
         }
       };
     });
 
-    this.socket.on('candidate', (id, candidate) => {
+    this.socket.on("candidate", (id, candidate) => {
       this.peerConnections[id]
         .addIceCandidate(new RTCIceCandidate(candidate))
         .catch((e) => console.error(e));
     });
 
-    this.socket.on('answer', (id, description) => {
+    this.socket.on("answer", (id, description) => {
       this.peerConnections[id].setRemoteDescription(description);
     });
 
-    this.socket.on('full', (room) => {
-      alert('Room ' + room + ' is full');
+    this.socket.on("full", (room) => {
+      alert("Room " + room + " is full");
     });
 
-    this.socket.on('bye', (id) => {
+    this.socket.on("bye", (id) => {
       handleRemoteHangup(id);
     });
 
