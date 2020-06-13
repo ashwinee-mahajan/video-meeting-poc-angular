@@ -52,7 +52,7 @@ export class AppComponent implements OnInit {
       .getUserMedia(this.constraints)
       .then((stream) => {
         this.myVideo.nativeElement.srcObject = stream;
-        this.myVideo.nativeElement.play();
+        this.myVideo.nativeElement.muted =true;
         this.socket.emit("ready");
       })
       .catch(getUserMediaError);
