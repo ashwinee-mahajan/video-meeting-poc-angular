@@ -1,0 +1,60 @@
+.room-details-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.meeting-room-container {
+    display: flex;
+    height: 100vh;
+}
+.members-video-container {
+    flex: 1;
+    flex-wrap: wrap;
+    display: flex;
+    overflow: scroll;
+}
+.host-container {
+    flex: 1;
+}
+.host-video-container {
+    flex: 1;
+}
+
+.details-container {
+    box-shadow: 0 2px 2px rgba(10,16,20,.24), 0 0 2px rgba(10,16,20,.12);
+    box-sizing: border-box;
+    border-radius: 4px;
+    padding: 2%;
+}
+
+.room-create-controls {
+    display: flex;
+}
+
+.room-create-controls button {
+    margin: 0 0 0 1%;
+}
+
+.room-name-message {
+    background: linear-gradient(to right, rgba(212,228,239,1) 0%, rgba(134,174,204,1) 100%);
+    padding: 1%;
+    margin: 1%;
+}
+
+.join-room-controls input {
+    margin: 2% 0;
+}
+
+.separator {
+    height: 1%;
+    background: rgba(224,224,224,1);
+    margin: 2%;
+}
+
+.join-room-controls {
+    display: flex;
+    flex-direction: column;
+}

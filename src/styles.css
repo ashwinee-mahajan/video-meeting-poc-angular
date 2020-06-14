@@ -1,1 +1,25 @@
 /* You can add global styles to this file, and also import other style files */
+* {
+    font-family: Roboto,Helvetica Neue Light,Helvetica Neue,Helvetica,Arial,Lucida Grande,sans-serif;
+} 
+
+body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+}
+
+button {
+    background: rgba(134,174,204,1);
+    outline: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    border: 1px solid rgb(120, 148, 169);
+    border-radius: 2px;
+}
+
+
+input {
+    padding: 2%;
+}

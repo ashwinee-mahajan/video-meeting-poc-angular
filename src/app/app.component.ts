@@ -2,27 +2,40 @@ import {
   Component,
   OnInit,
   ViewChild,
-  ViewChildren,
   ElementRef,
-  QueryList,
 } from '@angular/core';
 import { Socket } from 'ngx-socket-io';
-import { IfStmt } from '@angular/compiler';
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
 })
-export class AppComponent implements OnInit {
+export class AppComponent {
   title = 'webrtcsampleapp';
 
   room = !location.pathname.substring(1)
     ? 'home'
     : location.pathname.substring(1);
   remotePeers: Array<any> = new Array();
+  hostDetails = {
+    peerId: null, 
+    stream: null, 
+    isHost: true,
+    roomMemberName: null
+  }
 
   @ViewChild('myVideo')
   myVideo: ElementRef<HTMLVideoElement>;
+
+  @ViewChild('hostName')
+  hostName: ElementRef<HTMLInputElement>; 
+
+  @ViewChild('roomId')
+  roomId: ElementRef<HTMLInputElement>; 
+
+  @ViewChild('roomMemberName')
+  roomMemberName: ElementRef<HTMLInputElement>;
 
   /** @type {RTCConfiguration} */
   config = {
@@ -34,41 +47,75 @@ export class AppComponent implements OnInit {
   };
 
   /** @type {MediaStreamConstraints} */
-  constraints = {
-    audio: true,
-    video: true,
+  hostConstraints = {
+    audio: {
+      echoCancellation: true,
+      noiseSuppression: true
+    },
+    video: {
+      width: { ideal: 1024 },
+      height: { ideal: 720 }
+    }
   };
 
+  roomMemberConstraints = {
+    audio: {
+      echoCancellation: true,
+      noiseSuppression: true
+    },
+    video: {
+      width: { ideal: 320},
+      height: { ideal: 240}
+    }
+  }
+ 
   peerConnections = {};
-
+  myName= "";
+  myId="";
+  isHost = false;
+  isJoined = false;
+  roomName="";
   constructor(private socket: Socket) {}
 
-  ngOnInit() {
-    if (this.room && !!this.room) {
-      this.socket.emit("join", this.room);
-    }
-
-    navigator.mediaDevices
-      .getUserMedia(this.constraints)
+  getReady = (isHost, id, roomMemberName) => {
+    this.myName = roomMemberName;
+    this.myId= id;
+    this.isHost = isHost;
+    if(isHost) {
+      navigator.mediaDevices
+      .getUserMedia(this.hostConstraints)
       .then((stream) => {
-        this.myVideo.nativeElement.srcObject = stream;
-        this.myVideo.nativeElement.muted =true;
+        // this.myVideo.nativeElement.srcObject = stream;
+        // this.myVideo.nativeElement.muted =true;
+        handleRemoteStreamAdded(stream, id, isHost, roomMemberName)
         this.socket.emit("ready");
       })
       .catch(getUserMediaError);
+    } else {
+      navigator.mediaDevices
+      .getUserMedia(this.roomMemberConstraints)
+      .then((stream) => {
+        // this.myVideo.nativeElement.srcObject = stream;
+        // this.myVideo.nativeElement.muted =true;
+        handleRemoteStreamAdded(stream, id, isHost, roomMemberName)
+        this.socket.emit("ready");
+      })
+      .catch(getUserMediaError);
+    }    
 
     function getUserMediaError(error) {
       console.error(error);
     }
 
-    this.socket.on("ready", async (id) => {
+    this.socket.on("ready", async (id, isHost, roomMemberName) => {
       const peerConnection = new RTCPeerConnection(this.config);
       this.peerConnections[id] = peerConnection;
 
-      let stream = this.myVideo.nativeElement.srcObject;
-      if (this.myVideo.nativeElement instanceof HTMLVideoElement) {
-        (<MediaStream>stream).getTracks().forEach(track => peerConnection.addTrack(track, <MediaStream>stream));
-      }
+      let stream = this.remotePeers.filter( peer => peer.peerId == this.myId )[0].stream;
+      const mediaStream = new MediaStream();
+      await (<MediaStream>stream).getTracks().forEach(track => mediaStream.addTrack(track));
+
+      handleRemoteStreamAdded(mediaStream, id, isHost, roomMemberName);
 
       peerConnection
         .createOffer()
@@ -79,9 +126,6 @@ export class AppComponent implements OnInit {
             message: peerConnection.localDescription,
           });
         });
-
-      peerConnection.ontrack = (event) =>
-        handleRemoteStreamAdded(event.streams[0], id);
 
       peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
@@ -98,22 +142,32 @@ export class AppComponent implements OnInit {
       delete this.peerConnections[id];
     };
 
-    const handleRemoteStreamAdded = (stream, id) => {
-      const matchedIndex = this.remotePeers.findIndex(
-        (peer) => peer.peerId === id
-      );
-      matchedIndex === -1 &&
-        this.remotePeers.push({ peerId: id, stream: stream });
+    const handleRemoteStreamAdded = (stream, id, isHost, roomMemberName) => {  
+        if(isHost) {
+          this.hostDetails = {
+            peerId: id, 
+            stream, 
+            isHost,
+            roomMemberName
+          }
+        } 
+        this.remotePeers.push({ 
+          peerId: id, 
+          stream, 
+          isHost,
+          roomMemberName 
+        });
     };
 
-    this.socket.on("offer", async (id, description) => {
+    this.socket.on("offer", async (id, description, isHost, roomMemberName) => {
       const peerConnection = new RTCPeerConnection(this.config);
       this.peerConnections[id] = peerConnection;
-      let stream = this.myVideo.nativeElement.srcObject;
-      if (this.myVideo.nativeElement instanceof HTMLVideoElement) {
-        (<MediaStream>stream).getTracks().forEach(track => peerConnection.addTrack(track, <MediaStream>stream));
-      }
+      let stream = this.remotePeers.filter( peer => peer.peerId == this.myId )[0].stream;;
+      const mediaStream = new MediaStream();
+      
+      await (<MediaStream>stream).getTracks().forEach(track => mediaStream.addTrack(track));
 
+      handleRemoteStreamAdded(mediaStream, id, isHost, roomMemberName);
       peerConnection
         .setRemoteDescription(description)
         .then(() => peerConnection.createAnswer())
@@ -124,7 +178,6 @@ export class AppComponent implements OnInit {
             message: peerConnection.localDescription,
           });
         });
-      peerConnection.ontrack = (event) => handleRemoteStreamAdded(event.streams[0], id);
       peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
           this.socket.emit("candidate", { id, message: event.candidate });
@@ -150,8 +203,60 @@ export class AppComponent implements OnInit {
       handleRemoteHangup(id);
     });
 
+    this.socket.on("screensharing", async(id, hostId, stream) => {
+      this.remotePeers.map( peer =>{ 
+        if(peer.peerId == hostId) {
+          peer.stream = stream
+        }
+      });
+    });
+    
     window.onunload = window.onbeforeunload = function () {
       this.socket.close();
     };
   }
+
+
+  startSharing = async() => {
+    let captureStream = null;
+
+    try {
+      const peerConnection = new RTCPeerConnection(this.config);
+      this.peerConnections[this.myId] = peerConnection;
+
+      const mediaDevices = navigator.mediaDevices as any;
+      captureStream = await mediaDevices.getDisplayMedia({audio: true, video: true}); 
+      
+      this.remotePeers.map( peer =>{ 
+        if(peer.peerId == this.myId) {
+          peer.stream = captureStream
+        }
+      });
+      this.socket.emit("screensharing", {id: this.myId, stream: captureStream});
+    } catch(err) {
+      console.error("Error: " + err);
+    }
+    
+  }
+
+  stopSharing = async() => {
+
+  }
+
+  createRoom = () => {
+    const hostName = this.hostName.nativeElement.value;
+    const roomName = `${hostName}-${Math.random().toString(36).substring(7)}`; // Convert this to random value
+    this.roomName = roomName;
+  }
+
+  joinRoom = () => {    
+    const roomMemberName = this.roomMemberName.nativeElement.value;
+    const roomId = this.roomId.nativeElement.value;
+    const isHost = roomId.includes(roomMemberName);
+    if(roomId && roomMemberName) {
+      this.isJoined = true;
+      this.socket.emit("join", {roomId, roomMemberName, isHost}, (id)=> {      
+        this.getReady(isHost, id.id, roomMemberName)});
+      }
+    }
 }

@@ -1,12 +1,68 @@
-<div class="row border h-75 no-gutters">
-  <video controls autoplay playsinline #myVideo ></video>
+<div class="room-details-container" *ngIf="!isJoined">
+  <div *ngIf="roomName" class="room-name-message">
+    Meeting Room: <strong>{{ roomName }}</strong>
+    <div>Please share it to all invitees</div>
+    <div>
+      <strong>NOTE:</strong>While joining the room, It is required for the HOST
+      to enter name used while creating room
+    </div>
+  </div>
+  <div class="details-container">
+    <div class="room-create-controls">
+      <input
+        id="hostname"
+        type="text"
+        placeholder="Enter Host Name"
+        #hostName
+      />
+      <button (click)="createRoom()">Create Room</button>
+    </div>
+    <div class="separator"></div>
+    <div class="join-room-controls">
+      <input
+        id="roomMemberName"
+        type="text"
+        placeholder="Enter your name"
+        #roomMemberName
+      />
+      <input id="roomId" placeholder="Enter room id" value="a-dr6w5" #roomId />
+      <button (click)="joinRoom()">Join Room</button>
+    </div>
+  </div>
 </div>
 
-<div class="row flex-nowrap room-members">
-  <div class="col" *ngFor="let remotePeer of remotePeers">
-    <div>User {{remotePeer?.peerId}} </div>
-      <video [id]="remotePeer?.peerId" class="border border-danger w-100 h-100" autoplay playsinline controls [srcObject]="(remotePeer?.stream)">
-        
-      </video>
+<div  class="meeting-room-container" *ngIf="isJoined">
+  <div class="host-container" *ngIf="hostDetails?.peerId">    
+    <video
+    [id]="hostDetails?.peerId"
+    autoplay
+    playsinline
+    controls
+    [srcObject]="hostDetails?.stream"
+  ></video>
   </div>
+  <div class="members-video-container" >
+    <div *ngFor="let remotePeer of remotePeers">
+      <div class="member-container" >
+        <div *ngIf="!remotePeer?.isHost">
+          <strong>{{ remotePeer?.roomMemberName }}</strong>
+        </div>
+        <video
+          *ngIf="!remotePeer?.isHost"
+          [id]="remotePeer?.peerId"
+          autoplay
+          playsinline
+          controls
+          width="240"
+          height="120"
+          [srcObject]="remotePeer?.stream"
+        ></video>
+      </div>
+    </div>
+  </div>
+  
+    <!-- <div *ngIf="isHost">
+      <button (click)="startSharing()">Start Sharing</button>
+      <button (click)="stopSharing()">Stop Sharing</button>
+    </div> -->
 </div>

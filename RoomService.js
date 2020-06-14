@@ -1,24 +1,17 @@
 /** @type {SocketIO.Server} */
 let _io;
-const MAX_CLIENTS = 5;
+const MAX_CLIENTS = 50;
 
 /** @param {SocketIO.Socket} socket */
 function listen(socket) {
   const io = _io;
-  const rooms = io.nsps['/'].adapter.rooms;
 
-  socket.on('join', function(room) {
-
-    let numClients = 0;
-    if (rooms[room]) {
-      numClients = rooms[room].length;
-    }
-    if (numClients < MAX_CLIENTS) {
+  socket.on('join', ({roomId, roomMemberName, isHost}, callback) =>  {
       socket.on('ready', function() {
-        socket.broadcast.to(room).emit('ready', socket.id);
+        socket.broadcast.to(roomId).emit('ready', socket.id, isHost, roomMemberName);
       });
       socket.on('offer', ({id, message}) => {
-        socket.to(id).emit('offer', socket.id, message);
+        socket.to(id).emit('offer', socket.id, message, isHost, roomMemberName);
       });
       socket.on('answer', ({id, message}) => {
         socket.to(id).emit('answer', socket.id, message);
@@ -27,12 +20,20 @@ function listen(socket) {
         socket.to(id).emit('candidate', socket.id, message);
       });
       socket.on('disconnect', () => {
-        socket.broadcast.to(room).emit('bye', socket.id);
+        socket.broadcast.to(roomId).emit('bye', socket.id);
       });
-      socket.join(room);
-    } else {
-      socket.emit('full', room);
-    }
+
+      socket.on('screensharing', ({id, stream}) => {
+        socket.broadcast.to(roomId).emit('screensharing', socket.id, id, stream);
+      });
+
+      socket.join(roomId);
+      callback({id: socket.id});
+      
+    //}
+    //  else {
+    //   socket.emit('full', roomId);
+    // }
   });
 }
 
