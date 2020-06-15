@@ -108,10 +108,13 @@ export class AppComponent {
       this.peerConnections[id] = peerConnection;
 
       let stream = this.remotePeers.filter( peer => peer.peerId === this.myId )[0].stream;
-      const mediaStream = new MediaStream();
-      await (<MediaStream>stream).getTracks().forEach(track => mediaStream.addTrack(track));
+      // const mediaStream = new MediaStream();
+      // await (<MediaStream>stream).getTracks().forEach(track => mediaStream.addTrack(track));
       await (<MediaStream>stream).getTracks().forEach(track => peerConnection.addTrack(track, stream));
-      handleRemoteStreamAdded(mediaStream, id, isHost, roomMemberName);
+      
+
+      peerConnection.ontrack = (event) =>
+        handleRemoteStreamAdded(event.streams[0], id, isHost, roomMemberName);
 
       peerConnection
         .createOffer()
@@ -147,6 +150,10 @@ export class AppComponent {
             roomMemberName
           }
         } 
+        const matchedIndex = this.remotePeers.findIndex(
+          (peer) => peer.peerId === id
+        );
+        matchedIndex === -1 && 
         this.remotePeers.push({ 
           peerId: id, 
           stream, 
@@ -159,12 +166,13 @@ export class AppComponent {
       const peerConnection = new RTCPeerConnection(this.config);
       this.peerConnections[id] = peerConnection;
       let stream = this.remotePeers.filter( peer => peer.peerId == this.myId )[0].stream;;
-      const mediaStream = new MediaStream();
+      // const mediaStream = new MediaStream();
       
-      await (<MediaStream>stream).getTracks().forEach(track => mediaStream.addTrack(track));
-      await (<MediaStream>stream).getTracks().forEach(track => peerConnection.addTrack(track, stream));
+      // await (<MediaStream>stream).getTracks().forEach(track => mediaStream.addTrack(track));
+       await (<MediaStream>stream).getTracks().forEach(track => peerConnection.addTrack(track, stream));
 
-      handleRemoteStreamAdded(mediaStream, id, isHost, roomMemberName);
+      peerConnection.ontrack = (event) =>
+        handleRemoteStreamAdded(event.streams[0], id, isHost, roomMemberName);
       peerConnection
         .setRemoteDescription(description)
         .then(() => peerConnection.createAnswer())
