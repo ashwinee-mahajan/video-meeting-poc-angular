@@ -134,12 +134,19 @@ export class AppComponent {
     });
 
     const handleRemoteHangup = (id) => {
+      const isLeftUserWasHost = this.remotePeers.find(
+        (remotePeer) => id === remotePeer.peerId && remotePeer.isHost
+      );
       this.remotePeers = this.remotePeers.filter(
         (remotePeer) => id !== remotePeer.peerId
       );
       this.peerConnections[id] && this.peerConnections[id].close();
       delete this.peerConnections[id];
-      if(isHost) {
+
+      this.remotePeers = this.remotePeers.filter(
+        (remotePeer) => id !== remotePeer.peerId
+      );
+      if(isLeftUserWasHost) {
         this.hostDetails = {
           peerId: null, 
           stream: null, 
