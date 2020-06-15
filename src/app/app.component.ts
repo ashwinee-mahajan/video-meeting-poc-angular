@@ -325,5 +325,9 @@ export class AppComponent {
       this.socket.emit("join", {roomId, roomMemberName, isHost}, (id)=> {      
         this.getReady(isHost, id.id, roomMemberName)});
       }
+
+      this.socket.on("full", (room) => {
+        alert("Room " + room + " is full");
+      });
     }
 }

@@ -1,12 +1,17 @@
 /** @type {SocketIO.Server} */
 let _io;
-const MAX_CLIENTS = 50;
+const MAX_CLIENTS = 2;
 
 /** @param {SocketIO.Socket} socket */
 function listen(socket) {
   const io = _io;
-
+  const rooms = io.nsps['/'].adapter.rooms;
   socket.on('join', ({roomId, roomMemberName, isHost}, callback) =>  {
+    let numClients = 0;
+    if (rooms[roomId]) {
+      numClients = rooms[roomId].length;
+    }
+    if (numClients < MAX_CLIENTS) {
       socket.on('ready', function() {
         socket.broadcast.to(roomId).emit('ready', socket.id, isHost, roomMemberName);
       });
@@ -33,10 +38,10 @@ function listen(socket) {
       socket.join(roomId);
       callback({id: socket.id});
       
-    //}
-    //  else {
-    //   socket.emit('full', roomId);
-    // }
+    }
+     else {
+      socket.emit('full', roomId);
+    }
   });
 }
 
