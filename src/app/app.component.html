@@ -25,14 +25,15 @@
         placeholder="Enter your name"
         #roomMemberName
       />
-      <input id="roomId" placeholder="Enter room id" #roomId />
+      <input id="roomId" placeholder="Enter room id" value="a-dr6w5" #roomId />
       <button (click)="joinRoom()">Join Room</button>
     </div>
   </div>
 </div>
 
 <div  class="meeting-room-container" *ngIf="isJoined">
-  <div class="host-container" *ngIf="hostDetails?.peerId">    
+  <div class="host-container" *ngIf="hostDetails?.peerId"> 
+    <strong>{{ hostDetails?.roomMemberName }}</strong>
     <video
     [id]="hostDetails?.peerId"
     autoplay

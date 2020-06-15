@@ -203,14 +203,57 @@ export class AppComponent {
       handleRemoteHangup(id);
     });
 
-    this.socket.on("screensharing", async(id, hostId, stream) => {
-      this.remotePeers.map( peer =>{ 
-        if(peer.peerId == hostId) {
-          peer.stream = stream
-        }
-      });
+    this.socket.on("screensharing", async(id, hostId) => {
+      const peerConnection = new RTCPeerConnection(this.config);
+      this.peerConnections[id] = peerConnection;
+
+      let stream = this.remotePeers.filter( peer => peer.peerId == this.myId )[0].stream;
+      const mediaStream = new MediaStream();
+      await (<MediaStream>stream).getTracks().forEach(track => mediaStream.addTrack(track));
+
+      handleRemoteStreamAdded(mediaStream, id, isHost, roomMemberName);
+
+      peerConnection
+        .createOffer()
+        .then((sdp) => peerConnection.setLocalDescription(sdp))
+        .then(() => {
+          this.socket.emit("offerScreensharing", {
+            id,
+            message: peerConnection.localDescription,
+          });
+        });
     });
     
+    this.socket.on("offerScreensharing", async (id, description, isHost, roomMemberName) => {
+      const peerConnection = new RTCPeerConnection(this.config);
+      this.peerConnections[id] = peerConnection;
+      let stream = this.remotePeers.filter( peer => peer.peerId == this.myId )[0].stream;;
+      const mediaStream = new MediaStream();
+      
+      await (<MediaStream>stream).getTracks().forEach(track => mediaStream.addTrack(track));
+
+      this.remotePeers.map( peer =>{ 
+        if(peer.peerId == this.myId) {
+          peer.stream = mediaStream
+        }
+      });
+      peerConnection
+        .setRemoteDescription(description)
+        .then(() => peerConnection.createAnswer())
+        .then((sdp) => peerConnection.setLocalDescription(sdp))
+        .then(() => {
+          this.socket.emit("answer", {
+            id,
+            message: peerConnection.localDescription,
+          });
+        });
+      peerConnection.onicecandidate = (event) => {
+        if (event.candidate) {
+          this.socket.emit("candidate", { id, message: event.candidate });
+        }
+      };
+    });
+
     window.onunload = window.onbeforeunload = function () {
       this.socket.close();
     };
@@ -227,9 +270,13 @@ export class AppComponent {
       const mediaDevices = navigator.mediaDevices as any;
       captureStream = await mediaDevices.getDisplayMedia({audio: true, video: true}); 
       
+      const mediaStream = new MediaStream();
+      
+      await (<MediaStream>captureStream).getTracks().forEach(track => mediaStream.addTrack(track));
+
       this.remotePeers.map( peer =>{ 
         if(peer.peerId == this.myId) {
-          peer.stream = captureStream
+          peer.stream = mediaStream
         }
       });
       this.socket.emit("screensharing", {id: this.myId, stream: captureStream});

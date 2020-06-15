@@ -23,8 +23,11 @@ function listen(socket) {
         socket.broadcast.to(roomId).emit('bye', socket.id);
       });
 
-      socket.on('screensharing', ({id, stream}) => {
-        socket.broadcast.to(roomId).emit('screensharing', socket.id, id, stream);
+      socket.on('screensharing', ({id}) => {
+        socket.broadcast.to(roomId).emit('screensharing', socket.id, id);
+      });
+      socket.on('offerScreensharing', ({id, message}) => {
+        socket.to(id).emit('offerScreensharing', socket.id, message, isHost, roomMemberName);
       });
 
       socket.join(roomId);
