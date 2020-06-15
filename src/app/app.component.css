@@ -61,3 +61,8 @@
     display: flex;
     flex-direction: column;
 }
+.member-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
