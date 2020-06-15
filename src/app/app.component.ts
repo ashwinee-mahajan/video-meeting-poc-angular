@@ -139,6 +139,14 @@ export class AppComponent {
       );
       this.peerConnections[id] && this.peerConnections[id].close();
       delete this.peerConnections[id];
+      if(isHost) {
+        this.hostDetails = {
+          peerId: null, 
+          stream: null, 
+          isHost: true,
+          roomMemberName: null
+        }
+      }
     };
 
     const handleRemoteStreamAdded = (stream, id, isHost, roomMemberName) => {  
