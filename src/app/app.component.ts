@@ -85,8 +85,6 @@ export class AppComponent {
       navigator.mediaDevices
       .getUserMedia(this.hostConstraints)
       .then((stream) => {
-        // this.myVideo.nativeElement.srcObject = stream;
-        // this.myVideo.nativeElement.muted =true;
         handleRemoteStreamAdded(stream, id, isHost, roomMemberName)
         this.socket.emit("ready");
       })
@@ -95,8 +93,6 @@ export class AppComponent {
       navigator.mediaDevices
       .getUserMedia(this.roomMemberConstraints)
       .then((stream) => {
-        // this.myVideo.nativeElement.srcObject = stream;
-        // this.myVideo.nativeElement.muted =true;
         handleRemoteStreamAdded(stream, id, isHost, roomMemberName)
         this.socket.emit("ready");
       })
@@ -111,10 +107,10 @@ export class AppComponent {
       const peerConnection = new RTCPeerConnection(this.config);
       this.peerConnections[id] = peerConnection;
 
-      let stream = this.remotePeers.filter( peer => peer.peerId == this.myId )[0].stream;
+      let stream = this.remotePeers.filter( peer => peer.peerId === this.myId )[0].stream;
       const mediaStream = new MediaStream();
       await (<MediaStream>stream).getTracks().forEach(track => mediaStream.addTrack(track));
-
+      await (<MediaStream>stream).getTracks().forEach(track => peerConnection.addTrack(track, stream));
       handleRemoteStreamAdded(mediaStream, id, isHost, roomMemberName);
 
       peerConnection
@@ -166,6 +162,7 @@ export class AppComponent {
       const mediaStream = new MediaStream();
       
       await (<MediaStream>stream).getTracks().forEach(track => mediaStream.addTrack(track));
+      await (<MediaStream>stream).getTracks().forEach(track => peerConnection.addTrack(track, stream));
 
       handleRemoteStreamAdded(mediaStream, id, isHost, roomMemberName);
       peerConnection
@@ -203,56 +200,56 @@ export class AppComponent {
       handleRemoteHangup(id);
     });
 
-    this.socket.on("screensharing", async(id, hostId) => {
-      const peerConnection = new RTCPeerConnection(this.config);
-      this.peerConnections[id] = peerConnection;
+    // this.socket.on("screensharing", async(id, hostId) => {
+    //   const peerConnection = new RTCPeerConnection(this.config);
+    //   this.peerConnections[id] = peerConnection;
 
-      let stream = this.remotePeers.filter( peer => peer.peerId == this.myId )[0].stream;
-      const mediaStream = new MediaStream();
-      await (<MediaStream>stream).getTracks().forEach(track => mediaStream.addTrack(track));
+    //   let stream = this.remotePeers.filter( peer => peer.peerId == this.myId )[0].stream;
+    //   const mediaStream = new MediaStream();
+    //   await (<MediaStream>stream).getTracks().forEach(track => mediaStream.addTrack(track));
 
-      handleRemoteStreamAdded(mediaStream, id, isHost, roomMemberName);
+    //   handleRemoteStreamAdded(mediaStream, id, isHost, roomMemberName);
 
-      peerConnection
-        .createOffer()
-        .then((sdp) => peerConnection.setLocalDescription(sdp))
-        .then(() => {
-          this.socket.emit("offerScreensharing", {
-            id,
-            message: peerConnection.localDescription,
-          });
-        });
-    });
+    //   peerConnection
+    //     .createOffer()
+    //     .then((sdp) => peerConnection.setLocalDescription(sdp))
+    //     .then(() => {
+    //       this.socket.emit("offerScreensharing", {
+    //         id,
+    //         message: peerConnection.localDescription,
+    //       });
+    //     });
+    // });
     
-    this.socket.on("offerScreensharing", async (id, description, isHost, roomMemberName) => {
-      const peerConnection = new RTCPeerConnection(this.config);
-      this.peerConnections[id] = peerConnection;
-      let stream = this.remotePeers.filter( peer => peer.peerId == this.myId )[0].stream;;
-      const mediaStream = new MediaStream();
+    // this.socket.on("offerScreensharing", async (id, description, isHost, roomMemberName) => {
+    //   const peerConnection = new RTCPeerConnection(this.config);
+    //   this.peerConnections[id] = peerConnection;
+    //   let stream = this.remotePeers.filter( peer => peer.peerId == this.myId )[0].stream;;
+    //   const mediaStream = new MediaStream();
       
-      await (<MediaStream>stream).getTracks().forEach(track => mediaStream.addTrack(track));
+    //   await (<MediaStream>stream).getTracks().forEach(track => mediaStream.addTrack(track));
 
-      this.remotePeers.map( peer =>{ 
-        if(peer.peerId == this.myId) {
-          peer.stream = mediaStream
-        }
-      });
-      peerConnection
-        .setRemoteDescription(description)
-        .then(() => peerConnection.createAnswer())
-        .then((sdp) => peerConnection.setLocalDescription(sdp))
-        .then(() => {
-          this.socket.emit("answer", {
-            id,
-            message: peerConnection.localDescription,
-          });
-        });
-      peerConnection.onicecandidate = (event) => {
-        if (event.candidate) {
-          this.socket.emit("candidate", { id, message: event.candidate });
-        }
-      };
-    });
+    //   this.remotePeers.map( peer =>{ 
+    //     if(peer.peerId == this.myId) {
+    //       peer.stream = mediaStream
+    //     }
+    //   });
+    //   peerConnection
+    //     .setRemoteDescription(description)
+    //     .then(() => peerConnection.createAnswer())
+    //     .then((sdp) => peerConnection.setLocalDescription(sdp))
+    //     .then(() => {
+    //       this.socket.emit("answer", {
+    //         id,
+    //         message: peerConnection.localDescription,
+    //       });
+    //     });
+    //   peerConnection.onicecandidate = (event) => {
+    //     if (event.candidate) {
+    //       this.socket.emit("candidate", { id, message: event.candidate });
+    //     }
+    //   };
+    // });
 
     window.onunload = window.onbeforeunload = function () {
       this.socket.close();
@@ -260,35 +257,35 @@ export class AppComponent {
   }
 
 
-  startSharing = async() => {
-    let captureStream = null;
+  // startSharing = async() => {
+  //   let captureStream = null;
 
-    try {
-      const peerConnection = new RTCPeerConnection(this.config);
-      this.peerConnections[this.myId] = peerConnection;
+  //   try {
+  //     const peerConnection = new RTCPeerConnection(this.config);
+  //     this.peerConnections[this.myId] = peerConnection;
 
-      const mediaDevices = navigator.mediaDevices as any;
-      captureStream = await mediaDevices.getDisplayMedia({audio: true, video: true}); 
+  //     const mediaDevices = navigator.mediaDevices as any;
+  //     captureStream = await mediaDevices.getDisplayMedia({audio: true, video: true}); 
       
-      const mediaStream = new MediaStream();
+  //     const mediaStream = new MediaStream();
       
-      await (<MediaStream>captureStream).getTracks().forEach(track => mediaStream.addTrack(track));
+  //     await (<MediaStream>captureStream).getTracks().forEach(track => mediaStream.addTrack(track));
 
-      this.remotePeers.map( peer =>{ 
-        if(peer.peerId == this.myId) {
-          peer.stream = mediaStream
-        }
-      });
-      this.socket.emit("screensharing", {id: this.myId, stream: captureStream});
-    } catch(err) {
-      console.error("Error: " + err);
-    }
+  //     this.remotePeers.map( peer =>{ 
+  //       if(peer.peerId == this.myId) {
+  //         peer.stream = mediaStream
+  //       }
+  //     });
+  //     this.socket.emit("screensharing", {id: this.myId, stream: captureStream});
+  //   } catch(err) {
+  //     console.error("Error: " + err);
+  //   }
     
-  }
+  // }
 
-  stopSharing = async() => {
+  // stopSharing = async() => {
 
-  }
+  // }
 
   createRoom = () => {
     const hostName = this.hostName.nativeElement.value;
