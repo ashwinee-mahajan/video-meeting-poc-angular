@@ -18,6 +18,10 @@
 }
 .host-container {
     flex: 1;
+    flex-direction: column;
+    display: flex;
+    align-items: center;
+}
 }
 .host-video-container {
     flex: 1;
