@@ -38,7 +38,7 @@
     [id]="hostDetails?.peerId"
     autoplay
     playsinline
-    muted
+    [muted]="hostDetails?.peerId === myId"
     controls
     [srcObject]="hostDetails?.stream"
   ></video>
@@ -55,7 +55,7 @@
           autoplay
           playsinline
           controls
-          muted="remotePeer?.peerId === myId"
+          [muted]="remotePeer?.peerId === myId"
           width="240"
           height="120"
           [srcObject]="remotePeer?.stream"
