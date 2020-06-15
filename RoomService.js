@@ -1,6 +1,6 @@
 /** @type {SocketIO.Server} */
 let _io;
-const MAX_CLIENTS = 2;
+const MAX_CLIENTS = 6;
 
 /** @param {SocketIO.Socket} socket */
 function listen(socket) {
