@@ -289,14 +289,19 @@ export class AppComponent {
 
       const mediaDevices = navigator.mediaDevices as any;
       captureStream = await mediaDevices.getDisplayMedia({audio: true, video: true}); 
+
+      const audioStream = await navigator.mediaDevices
+      .getUserMedia({audio: true});
+  
       
-      const mediaStream = new MediaStream();
+      // const mediaStream = new MediaStream();
+      captureStream.addTrack(audioStream.getAudioTracks()[0]);
       
-      await (<MediaStream>captureStream).getTracks().forEach(track => mediaStream.addTrack(track));
+      // await (<MediaStream>captureStream).getTracks().forEach(track => mediaStream.addTrack(track));
 
       this.remotePeers.map( peer =>{ 
         if(peer.peerId == this.myId) {
-          peer.stream = mediaStream
+          peer.stream = captureStream
         }
       });
       this.socket.emit("ready");
