@@ -348,7 +348,10 @@ export class AppComponent {
   }
 
   stopSharing = async() => {
+    const myCaptureStream = this.remotePeers.filter( peer => (peer.peerId == this.myId))[0].stream ;
+    let tracks = myCaptureStream.getTracks();
 
+    tracks.forEach(track => track.stop());
   }
 
   createRoom = () => {
