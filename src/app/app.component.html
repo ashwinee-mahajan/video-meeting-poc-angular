@@ -41,7 +41,13 @@
     [muted]="hostDetails?.peerId === myId"
     controls
     [srcObject]="hostDetails?.stream"
+    width="720"
+    height="360"
   ></video>
+  <div *ngIf="isHost">
+    <button (click)="startSharing()">Start Sharing</button>
+    <button (click)="stopSharing()">Stop Sharing</button>
+  </div>
   </div>
   <div class="members-video-container" >
     <div *ngFor="let remotePeer of remotePeers">
@@ -63,9 +69,5 @@
       </div>
     </div>
   </div>
-  
-    <!-- <div *ngIf="isHost">
-      <button (click)="startSharing()">Start Sharing</button>
-      <button (click)="stopSharing()">Stop Sharing</button>
-    </div> -->
+    
 </div>
