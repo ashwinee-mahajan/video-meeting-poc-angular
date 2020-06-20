@@ -1,9 +1,4 @@
-import {
-  Component,
-  OnInit,
-  ViewChild,
-  ElementRef,
-} from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { Socket } from 'ngx-socket-io';
 
 @Component({
@@ -19,20 +14,20 @@ export class AppComponent {
     : location.pathname.substring(1);
   remotePeers: Array<any> = new Array();
   hostDetails = {
-    peerId: null, 
-    stream: null, 
+    peerId: null,
+    stream: null,
     isHost: true,
-    roomMemberName: null
-  }
+    roomMemberName: null,
+  };
 
   @ViewChild('myVideo')
   myVideo: ElementRef<HTMLVideoElement>;
 
   @ViewChild('hostName')
-  hostName: ElementRef<HTMLInputElement>; 
+  hostName: ElementRef<HTMLInputElement>;
 
   @ViewChild('roomId')
-  roomId: ElementRef<HTMLInputElement>; 
+  roomId: ElementRef<HTMLInputElement>;
 
   @ViewChild('roomMemberName')
   roomMemberName: ElementRef<HTMLInputElement>;
@@ -50,68 +45,71 @@ export class AppComponent {
   hostConstraints = {
     audio: {
       echoCancellation: true,
-      noiseSuppression: true
+      noiseSuppression: true,
     },
     video: {
       width: { ideal: 1024 },
-      height: { ideal: 720 }
-    }
+      height: { ideal: 720 },
+    },
   };
 
   roomMemberConstraints = {
     audio: {
       echoCancellation: true,
-      noiseSuppression: true
+      noiseSuppression: true,
     },
     video: {
-      width: { ideal: 320},
-      height: { ideal: 240}
-    }
-  }
- 
+      width: { ideal: 320 },
+      height: { ideal: 240 },
+    },
+  };
+
   peerConnections = {};
-  myName= "";
-  myId="";
+  myName = '';
+  myId = '';
   isHost = false;
   isJoined = false;
-  roomName="";
+  roomName = '';
   constructor(private socket: Socket) {}
 
   getReady = (isHost, id, roomMemberName) => {
     this.myName = roomMemberName;
-    this.myId= id;
+    this.myId = id;
     this.isHost = isHost;
-    if(isHost) {
+    if (isHost) {
       navigator.mediaDevices
-      .getUserMedia(this.hostConstraints)
-      .then((stream) => {
-        handleRemoteStreamAdded(stream, id, isHost, roomMemberName)
-        this.socket.emit("ready");
-      })
-      .catch(getUserMediaError);
+        .getUserMedia(this.hostConstraints)
+        .then((stream) => {
+          handleRemoteStreamAdded(stream, id, isHost, roomMemberName);
+          this.socket.emit('ready');
+        })
+        .catch(getUserMediaError);
     } else {
       navigator.mediaDevices
-      .getUserMedia(this.roomMemberConstraints)
-      .then((stream) => {
-        handleRemoteStreamAdded(stream, id, isHost, roomMemberName)
-        this.socket.emit("ready");
-      })
-      .catch(getUserMediaError);
-    }    
+        .getUserMedia(this.roomMemberConstraints)
+        .then((stream) => {
+          handleRemoteStreamAdded(stream, id, isHost, roomMemberName);
+          this.socket.emit('ready');
+        })
+        .catch(getUserMediaError);
+    }
 
     function getUserMediaError(error) {
       console.error(error);
     }
 
-    this.socket.on("ready", async (id, isHost, roomMemberName) => {
+    this.socket.on('ready', async (id, isHost, roomMemberName) => {
       const peerConnection = new RTCPeerConnection(this.config);
       this.peerConnections[id] = peerConnection;
 
-      let stream = this.remotePeers.filter( peer => peer.peerId === this.myId )[0].stream;
+      let stream = this.remotePeers.filter(
+        (peer) => peer.peerId === this.myId
+      )[0].stream;
       // const mediaStream = new MediaStream();
       // await (<MediaStream>stream).getTracks().forEach(track => mediaStream.addTrack(track));
-      await (<MediaStream>stream).getTracks().forEach(track => peerConnection.addTrack(track, stream));
-      
+      (<MediaStream>stream)
+        .getTracks()
+        .forEach((track) => peerConnection.addTrack(track, stream));
 
       peerConnection.ontrack = (event) =>
         handleRemoteStreamAdded(event.streams[0], id, isHost, roomMemberName);
@@ -120,7 +118,7 @@ export class AppComponent {
         .createOffer()
         .then((sdp) => peerConnection.setLocalDescription(sdp))
         .then(() => {
-          this.socket.emit("offer", {
+          this.socket.emit('offer', {
             id,
             message: peerConnection.localDescription,
           });
@@ -128,7 +126,7 @@ export class AppComponent {
 
       peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-          this.socket.emit("candidate", { id, message: event.candidate });
+          this.socket.emit('candidate', { id, message: event.candidate });
         }
       };
     });
@@ -146,45 +144,47 @@ export class AppComponent {
       this.remotePeers = this.remotePeers.filter(
         (remotePeer) => id !== remotePeer.peerId
       );
-      if(isLeftUserWasHost) {
+      if (isLeftUserWasHost) {
         this.hostDetails = {
-          peerId: null, 
-          stream: null, 
+          peerId: null,
+          stream: null,
           isHost: true,
-          roomMemberName: null
-        }
+          roomMemberName: null,
+        };
       }
     };
 
-    const handleRemoteStreamAdded = (stream, id, isHost, roomMemberName) => {  
-        if(isHost) {
-          this.hostDetails = {
-            peerId: id, 
-            stream, 
-            isHost,
-            roomMemberName
-          }
-        } 
-        const matchedIndex = this.remotePeers.findIndex(
-          (peer) => peer.peerId === id
-        );
-        matchedIndex === -1 && 
-        this.remotePeers.push({ 
-          peerId: id, 
-          stream, 
+    const handleRemoteStreamAdded = (stream, id, isHost, roomMemberName) => {
+      if (isHost) {
+        this.hostDetails = {
+          peerId: id,
+          stream,
           isHost,
-          roomMemberName 
+          roomMemberName,
+        };
+      }
+      const matchedIndex = this.remotePeers.findIndex(
+        (peer) => peer.peerId === id
+      );
+      matchedIndex === -1 &&
+        this.remotePeers.push({
+          peerId: id,
+          stream,
+          isHost,
+          roomMemberName,
         });
     };
 
-    this.socket.on("offer", async (id, description, isHost, roomMemberName) => {
+    this.socket.on('offer', async (id, description, isHost, roomMemberName) => {
       const peerConnection = new RTCPeerConnection(this.config);
       this.peerConnections[id] = peerConnection;
-      let stream = this.remotePeers.filter( peer => peer.peerId == this.myId )[0].stream;;
-      // const mediaStream = new MediaStream();
-      
-      // await (<MediaStream>stream).getTracks().forEach(track => mediaStream.addTrack(track));
-       await (<MediaStream>stream).getTracks().forEach(track => peerConnection.addTrack(track, stream));
+      let stream = this.remotePeers.filter(
+        (peer) => peer.peerId == this.myId
+      )[0].stream;
+
+      (<MediaStream>stream)
+        .getTracks()
+        .forEach((track) => peerConnection.addTrack(track, stream));
 
       peerConnection.ontrack = (event) =>
         handleRemoteStreamAdded(event.streams[0], id, isHost, roomMemberName);
@@ -193,159 +193,123 @@ export class AppComponent {
         .then(() => peerConnection.createAnswer())
         .then((sdp) => peerConnection.setLocalDescription(sdp))
         .then(() => {
-          this.socket.emit("answer", {
+          this.socket.emit('answer', {
             id,
             message: peerConnection.localDescription,
           });
         });
       peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-          this.socket.emit("candidate", { id, message: event.candidate });
+          this.socket.emit('candidate', { id, message: event.candidate });
         }
       };
     });
 
-    this.socket.on("candidate", (id, candidate) => {
+    this.socket.on('candidate', (id, candidate) => {
       this.peerConnections[id]
         .addIceCandidate(new RTCIceCandidate(candidate))
         .catch((e) => console.error(e));
     });
 
-    this.socket.on("answer", (id, description) => {
+    this.socket.on('answer', (id, description) => {
       this.peerConnections[id].setRemoteDescription(description);
     });
 
-    this.socket.on("full", (room) => {
-      alert("Room " + room + " is full");
+    this.socket.on('full', (room) => {
+      alert('Room ' + room + ' is full');
     });
 
-    this.socket.on("bye", (id) => {
+    this.socket.on('bye', (id) => {
       handleRemoteHangup(id);
     });
 
-    // this.socket.on("screensharing", async(id, hostId) => {
-    //   const peerConnection = new RTCPeerConnection(this.config);
-    //   this.peerConnections[id] = peerConnection;
+    this.socket.on('screenCaptureOffer', (id, hostId, offer) => {
+      console.log(id);
+      console.log(offer);
+      const peerConnection = new RTCPeerConnection(this.config);
+      this.peerConnections[id] = peerConnection;
+      peerConnection
+        .setRemoteDescription(offer)
+        .then(() => {
+          return peerConnection.createAnswer();
+        })
+        .then((answer) => {
+          return peerConnection.setLocalDescription(
+            new RTCSessionDescription(answer)
+          );
+        })
+        .then(() => {
+          this.socket.emit('answer', peerConnection.localDescription);
+        });
 
-    //   let stream = this.remotePeers.filter( peer => peer.peerId == this.myId )[0].stream;
-    //   const mediaStream = new MediaStream();
-    //   await (<MediaStream>stream).getTracks().forEach(track => mediaStream.addTrack(track));
-
-    //   handleRemoteStreamAdded(mediaStream, id, isHost, roomMemberName);
-
-    //   peerConnection
-    //     .createOffer()
-    //     .then((sdp) => peerConnection.setLocalDescription(sdp))
-    //     .then(() => {
-    //       this.socket.emit("offerScreensharing", {
-    //         id,
-    //         message: peerConnection.localDescription,
-    //       });
-    //     });
-    // });
-    
-    // this.socket.on("offerScreensharing", async (id, description, isHost, roomMemberName) => {
-    //   const peerConnection = new RTCPeerConnection(this.config);
-    //   this.peerConnections[id] = peerConnection;
-    //   let stream = this.remotePeers.filter( peer => peer.peerId == this.myId )[0].stream;;
-    //   const mediaStream = new MediaStream();
-      
-    //   await (<MediaStream>stream).getTracks().forEach(track => mediaStream.addTrack(track));
-
-    //   this.remotePeers.map( peer =>{ 
-    //     if(peer.peerId == this.myId) {
-    //       peer.stream = mediaStream
-    //     }
-    //   });
-    //   peerConnection
-    //     .setRemoteDescription(description)
-    //     .then(() => peerConnection.createAnswer())
-    //     .then((sdp) => peerConnection.setLocalDescription(sdp))
-    //     .then(() => {
-    //       this.socket.emit("answer", {
-    //         id,
-    //         message: peerConnection.localDescription,
-    //       });
-    //     });
-    //   peerConnection.onicecandidate = (event) => {
-    //     if (event.candidate) {
-    //       this.socket.emit("candidate", { id, message: event.candidate });
-    //     }
-    //   };
-    // });
+      peerConnection.ontrack = (event) => {
+        console.log('on screencaptureoffer track');
+        this.remotePeers.map((peer) => {
+          if (peer.peerId == hostId) {
+            peer.stream = event.streams[0];
+          }
+        });
+      };
+    });
 
     window.onunload = window.onbeforeunload = function () {
       this.socket.close();
     };
-  }
+  };
 
-
-  startSharing = async() => {
-    let captureStream = null;
-
+  startSharing = async () => {
     try {
-      const peerConnection = new RTCPeerConnection(this.config);
-      this.peerConnections[this.myId] = peerConnection;
-
       const mediaDevices = navigator.mediaDevices as any;
-      captureStream = await mediaDevices.getDisplayMedia({audio: true, video: true}); 
+      const screenCaptureStream = await mediaDevices.getDisplayMedia();
 
-      const audioStream = await navigator.mediaDevices
-      .getUserMedia({audio: true});
-  
-      
-      // const mediaStream = new MediaStream();
-      captureStream.addTrack(audioStream.getAudioTracks()[0]);
-      
-      // await (<MediaStream>captureStream).getTracks().forEach(track => mediaStream.addTrack(track));
-
-      this.remotePeers.map( peer =>{ 
-        if(peer.peerId == this.myId) {
-          peer.stream = captureStream
-        }
+      Object.keys(this.peerConnections).map((peerconnection) => {
+        this.peerConnections[peerconnection].getSenders().map((sender) => {
+          if (sender.track.kind === 'video') {
+            sender.replaceTrack(screenCaptureStream.getTracks()[0]);
+          }
+        });
       });
-      this.socket.emit("ready");
-      
-    } catch(err) {
-      console.error("Error: " + err);
+    } catch (err) {
+      console.error('Error: ' + err);
     }
-    
-  }
+  };
 
-  stopSharing = async() => {
-    const videoStream = await navigator.mediaDevices
-    .getUserMedia(this.roomMemberConstraints);
-
-    const mediaStream = new MediaStream();
-      
-      await (<MediaStream>videoStream).getTracks().forEach(track => mediaStream.addTrack(track));
-
-      this.remotePeers.map( peer =>{ 
-        if(peer.peerId == this.myId) {
-          peer.stream = mediaStream
-        }
+  stopSharing = async () => {
+    try {
+      const videoStream = await navigator.mediaDevices.getUserMedia(
+        this.roomMemberConstraints
+      );
+      Object.keys(this.peerConnections).map((peerconnection) => {
+        this.peerConnections[peerconnection].getSenders().map((sender) => {
+          if (sender.track.kind === 'video') {
+            sender.replaceTrack(videoStream.getVideoTracks()[0]);
+          }
+        });
       });
-    this.socket.emit("ready");
-  }
+    } catch (error) {
+      console.error('Error: ' + error);
+    }
+  };
 
   createRoom = () => {
     const hostName = this.hostName.nativeElement.value;
     const roomName = `${hostName}-${Math.random().toString(36).substring(7)}`; // Convert this to random value
     this.roomName = roomName;
-  }
+  };
 
-  joinRoom = () => {    
+  joinRoom = () => {
     const roomMemberName = this.roomMemberName.nativeElement.value;
     const roomId = this.roomId.nativeElement.value;
     const isHost = roomId.includes(roomMemberName);
-    if(roomId && roomMemberName) {
+    if (roomId && roomMemberName) {
       this.isJoined = true;
-      this.socket.emit("join", {roomId, roomMemberName, isHost}, (id)=> {      
-        this.getReady(isHost, id.id, roomMemberName)});
-      }
-
-      this.socket.on("full", (room) => {
-        alert("Room " + room + " is full");
+      this.socket.emit('join', { roomId, roomMemberName, isHost }, (id) => {
+        this.getReady(isHost, id.id, roomMemberName);
       });
     }
+
+    this.socket.on('full', (room) => {
+      alert('Room ' + room + ' is full');
+    });
+  };
 }
