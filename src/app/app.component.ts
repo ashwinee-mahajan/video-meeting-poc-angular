@@ -223,35 +223,6 @@ export class AppComponent {
       handleRemoteHangup(id);
     });
 
-    this.socket.on('screenCaptureOffer', (id, hostId, offer) => {
-      console.log(id);
-      console.log(offer);
-      const peerConnection = new RTCPeerConnection(this.config);
-      this.peerConnections[id] = peerConnection;
-      peerConnection
-        .setRemoteDescription(offer)
-        .then(() => {
-          return peerConnection.createAnswer();
-        })
-        .then((answer) => {
-          return peerConnection.setLocalDescription(
-            new RTCSessionDescription(answer)
-          );
-        })
-        .then(() => {
-          this.socket.emit('answer', peerConnection.localDescription);
-        });
-
-      peerConnection.ontrack = (event) => {
-        console.log('on screencaptureoffer track');
-        this.remotePeers.map((peer) => {
-          if (peer.peerId == hostId) {
-            peer.stream = event.streams[0];
-          }
-        });
-      };
-    });
-
     window.onunload = window.onbeforeunload = function () {
       this.socket.close();
     };

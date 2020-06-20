@@ -28,14 +28,6 @@ function listen(socket) {
         socket.broadcast.to(roomId).emit('bye', socket.id);
       });
 
-      socket.on('screenCaptureOffer', ({message, hostId}) => {
-        socket.broadcast.to(roomId).emit('screenCaptureOffer', socket.id, hostId, message, isHost, roomMemberName);
-      });
-      socket.on('offerScreensharing', ({id, message}) => {
-        socket.to(id).emit('offerScreensharing', socket.id, message, isHost, roomMemberName);
-      });
-
-
       socket.join(roomId);
       callback({id: socket.id});
       
