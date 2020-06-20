@@ -12,8 +12,8 @@ const PORT = process.env.PORT || 3100;
 
 // Middleware
 app.use(cors());
-// var distDir = __dirname + "/dist/";
-// app.use(express.static(distDir));
+var distDir = __dirname + "/dist/";
+app.use(express.static(distDir));
 const RoomService = require('./RoomService')(io);
 io.sockets.on('connection', RoomService.listen);
 
