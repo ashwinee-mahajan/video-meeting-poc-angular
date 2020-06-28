@@ -66,14 +66,14 @@
           height="120"
           [srcObject]="remotePeer?.stream"
         ></video> -->
-        
-        <div *ngIf="isHost">
-          <audio
+        <audio
             [id]="remotePeer?.peerId"
             [muted]="(remotePeer.stream.getAudioTracks()[0].enabled) == 'true' ? 'false' : 'true'"
             autoplay
             [srcObject]="remotePeer?.stream"
         ></audio>
+        <div *ngIf="isHost">
+          
           <div
             *ngIf="(remotePeer.stream.getAudioTracks()[0].enabled)"
             class="mic-control"
