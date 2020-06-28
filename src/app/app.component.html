@@ -68,7 +68,7 @@
         ></video> -->
         <audio
             [id]="remotePeer?.peerId"
-            [muted]="isHost ? false : true"
+            [muted]="remotePeer?.peerId === myId"
             autoplay
             controls
             [srcObject]="remotePeer?.stream"
