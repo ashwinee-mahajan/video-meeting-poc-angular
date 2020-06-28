@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 import { SocketIoModule, SocketIoConfig } from 'ngx-socket-io';
 import { AppComponent } from './app.component';
 import { CanvasComponent } from './canvas/canvas.component';
+import adapter from 'webrtc-adapter';
 
 const config: SocketIoConfig = { url: 'https://node-video-server.herokuapp.com/', options: {}  };
 @NgModule({
