@@ -70,6 +70,7 @@
             [id]="remotePeer?.peerId"
             [muted]="(remotePeer?.stream?.getAudioTracks()[0]?.enabled)"
             autoplay
+            controls
             [srcObject]="remotePeer?.stream"
         ></audio>
         <div *ngIf="isHost">
