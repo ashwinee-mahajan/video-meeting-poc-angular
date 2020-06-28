@@ -68,7 +68,7 @@
         ></video> -->
         <audio
             [id]="remotePeer?.peerId"
-            [muted]="(remotePeer.stream.getAudioTracks()[0].enabled) == 'true' ? 'false' : 'true'"
+            [muted]="(remotePeer?.stream?.getAudioTracks()[0]?.enabled)"
             autoplay
             [srcObject]="remotePeer?.stream"
         ></audio>
