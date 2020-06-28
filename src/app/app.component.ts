@@ -59,12 +59,11 @@ export class AppComponent {
     audio: {
       echoCancellation: true,
       noiseSuppression: true,
-    }
-    // ,
-    // video: {
-    //   width: { ideal: 320 },
-    //   height: { ideal: 240 },
-    // },
+    },
+    video: {
+      width: { ideal: 320 },
+      height: { ideal: 240 },
+    },
   };
 
   peerConnections = {};

@@ -55,7 +55,7 @@
         <div *ngIf="!remotePeer?.isHost">
           <strong>{{ remotePeer?.roomMemberName }}</strong>
         </div>
-        <!-- <video
+        <video
           *ngIf="!remotePeer?.isHost"
           [id]="remotePeer?.peerId"
           autoplay
@@ -65,14 +65,14 @@
           width="240"
           height="120"
           [srcObject]="remotePeer?.stream"
-        ></video> -->
-        <audio
+        ></video>
+        <!-- <audio
             [id]="remotePeer?.peerId"
             [muted]="remotePeer?.peerId === myId"
             autoplay
             controls
             [srcObject]="remotePeer?.stream"
-        ></audio>
+        ></audio> -->
         <div *ngIf="isHost">
           
           <div
