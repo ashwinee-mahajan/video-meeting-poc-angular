@@ -301,7 +301,7 @@ export class AppComponent {
     console.log(peerId);
     console.log(this.peerConnections);
 
-    this.peerConnections[peerId] = this.peerConnections[peerId]
+    this.peerConnections[peerId]
       .getRemoteStreams()[0]
       .getTracks()
       .map((track) => {
