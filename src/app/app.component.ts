@@ -59,11 +59,12 @@ export class AppComponent {
     audio: {
       echoCancellation: true,
       noiseSuppression: true,
-    },
-    video: {
-      width: { ideal: 320 },
-      height: { ideal: 240 },
-    },
+    }
+    // ,
+    // video: {
+    //   width: { ideal: 320 },
+    //   height: { ideal: 240 },
+    // },
   };
 
   peerConnections = {};
@@ -113,11 +114,16 @@ export class AppComponent {
         .getTracks()
         .forEach((track) => peerConnection.addTrack(track, stream));
 
-      peerConnection.ontrack = (event) =>
+      peerConnection.ontrack = (event) => {
+        if (!isHost) {
+          event.streams[0].getAudioTracks()[0].enabled = false;
+        }
         handleRemoteStreamAdded(event.streams[0], id, isHost, roomMemberName);
+      }
+        
 
       peerConnection
-        .createOffer()
+        .createOffer({ offerToReceiveVideo: true })
         .then((sdp) => peerConnection.setLocalDescription(sdp))
         .then(() => {
           this.socket.emit('offer', {
@@ -188,11 +194,16 @@ export class AppComponent {
         .getTracks()
         .forEach((track) => peerConnection.addTrack(track, stream));
 
-      peerConnection.ontrack = (event) =>
+      peerConnection.ontrack = (event) => {
+        if (!isHost) {
+          event.streams[0].getAudioTracks()[0].enabled = false;
+        }
         handleRemoteStreamAdded(event.streams[0], id, isHost, roomMemberName);
+      }
+
       peerConnection
         .setRemoteDescription(description)
-        .then(() => peerConnection.createAnswer())
+        .then(() => peerConnection.createAnswer({ offerToReceiveVideo: true }))
         .then((sdp) => peerConnection.setLocalDescription(sdp))
         .then(() => {
           this.socket.emit('answer', {
@@ -284,5 +295,19 @@ export class AppComponent {
     this.socket.on('full', (room) => {
       alert('Room ' + room + ' is full');
     });
+  };
+
+  toggleMic = (peerId) => {
+    console.log(peerId);
+    console.log(this.peerConnections);
+
+    this.peerConnections[peerId]
+      .getRemoteStreams()[0]
+      .getTracks()
+      .map((track) => {
+        if (track.kind === "audio") {
+          track.enabled = !track.enabled;
+        }
+      });
   };
 }

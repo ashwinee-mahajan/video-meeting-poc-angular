@@ -31,31 +31,31 @@
   </div>
 </div>
 
-<div  class="meeting-room-container" *ngIf="isJoined">
-  <div class="host-container" *ngIf="hostDetails?.peerId"> 
+<div class="meeting-room-container" *ngIf="isJoined">
+  <div class="host-container" *ngIf="hostDetails?.peerId">
     <strong>{{ hostDetails?.roomMemberName }}</strong>
     <video
-    [id]="hostDetails?.peerId"
-    autoplay
-    playsinline
-    muted
-    controls
-    [srcObject]="hostDetails?.stream"
-    width="720"
-    height="360"
-  ></video>
-  <div *ngIf="isHost">
-    <button (click)="startSharing()">Start Sharing</button>
-    <button (click)="stopSharing()">Stop Sharing</button>
+      [id]="hostDetails?.peerId"
+      autoplay
+      playsinline
+      [muted]="true"
+      controls
+      [srcObject]="hostDetails?.stream"
+      width="720"
+      height="360"
+    ></video>
+    <div *ngIf="isHost">
+      <button (click)="startSharing()">Start Sharing</button>
+      <button (click)="stopSharing()">Stop Sharing</button>
+    </div>
   </div>
-  </div>
-  <div class="members-video-container" >
+  <div class="members-video-container">
     <div *ngFor="let remotePeer of remotePeers">
-      <div class="member-container" >
+      <div class="member-container">
         <div *ngIf="!remotePeer?.isHost">
           <strong>{{ remotePeer?.roomMemberName }}</strong>
         </div>
-        <video
+        <!-- <video
           *ngIf="!remotePeer?.isHost"
           [id]="remotePeer?.peerId"
           autoplay
@@ -65,9 +65,31 @@
           width="240"
           height="120"
           [srcObject]="remotePeer?.stream"
-        ></video>
+        ></video> -->
+        
+        <div *ngIf="isHost">
+          <audio
+            [id]="remotePeer?.peerId"
+            [muted]="(remotePeer.stream.getAudioTracks()[0].enabled) == 'true' ? 'false' : 'true'"
+            autoplay
+            [srcObject]="remotePeer?.stream"
+        ></audio>
+          <div
+            *ngIf="(remotePeer.stream.getAudioTracks()[0].enabled)"
+            class="mic-control"
+            (click)="toggleMic(remotePeer?.peerId)"
+          >
+            mute
+          </div>
+          <div
+            *ngIf="!(remotePeer?.stream?.getAudioTracks()[0].enabled)"
+            class="mic-control"
+            (click)="toggleMic(remotePeer?.peerId)"
+          >
+            unmute
+          </div>
+        </div>
       </div>
     </div>
   </div>
-    
 </div>
