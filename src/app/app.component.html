@@ -47,7 +47,34 @@
     <div *ngIf="isHost">
       <button (click)="startSharing()">Start Sharing</button>
       <button (click)="stopSharing()">Stop Sharing</button>
+      <button (click)="startRecording()">Start Recording</button>
+      <button (click)="stopRecording()">Stop Recording</button>
     </div>
+    <!-- <div *ngIf="recordedBlobs?.length"> -->
+      <video 
+        autoplay 
+        playsinline 
+        controls 
+        width="720"
+        height="360"
+        #recordedVideo
+      ></video>
+      <button (click)="onVideoDownload()">Download</button>
+
+      <label for="file-upload" class="custom-file-upload">
+        Recorded Video Upload
+      </label>
+      <input id="file-upload" type="file" (change)="onVideoUpload($event)"/>
+      <video 
+        autoplay 
+        playsinline 
+        controls 
+        width="720"
+        height="360"
+        #uploadVideo
+      ></video>
+      
+    <!-- </div> -->
   </div>
   <div class="members-video-container">
     <div *ngFor="let remotePeer of remotePeers">

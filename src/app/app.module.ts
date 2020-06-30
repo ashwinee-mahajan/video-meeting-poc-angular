@@ -5,6 +5,7 @@ import { AppComponent } from './app.component';
 import { CanvasComponent } from './canvas/canvas.component';
 import adapter from 'webrtc-adapter';
 
+
 const config: SocketIoConfig = { url: 'https://node-video-server.herokuapp.com/', options: {}  };
 @NgModule({
   declarations: [

@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { Socket } from 'ngx-socket-io';
+import * as CryptoJS from 'crypto-js';
 
 @Component({
   selector: 'app-root',
@@ -23,6 +24,12 @@ export class AppComponent {
   @ViewChild('myVideo')
   myVideo: ElementRef<HTMLVideoElement>;
 
+  @ViewChild('recordedVideo')
+  recordedVideo: ElementRef<HTMLVideoElement>;
+
+  @ViewChild('uploadVideo')
+  uploadVideo: ElementRef<HTMLVideoElement>;
+
   @ViewChild('hostName')
   hostName: ElementRef<HTMLInputElement>;
 
@@ -36,10 +43,13 @@ export class AppComponent {
   config = {
     iceServers: [
       {
-        urls: ['stun:stun.l.google.com:19302', "turn:13.250.13.83:3478?transport=udp"],
-        "username": "YzYNCouZM1mhqhmseWk6",
-        "credential": "YzYNCouZM1mhqhmseWk6"
-      }
+        urls: [
+          'stun:stun.l.google.com:19302',
+          'turn:13.250.13.83:3478?transport=udp',
+        ],
+        username: 'YzYNCouZM1mhqhmseWk6',
+        credential: 'YzYNCouZM1mhqhmseWk6',
+      },
     ],
   };
 
@@ -72,6 +82,8 @@ export class AppComponent {
   isHost = false;
   isJoined = false;
   roomName = '';
+  mediaRecorder;
+  recordedBlobs: any[];
   constructor(private socket: Socket) {}
 
   getReady = (isHost, id, roomMemberName) => {
@@ -118,8 +130,7 @@ export class AppComponent {
           event.streams[0].getAudioTracks()[0].enabled = false;
         }
         handleRemoteStreamAdded(event.streams[0], id, isHost, roomMemberName);
-      }
-        
+      };
 
       peerConnection
         .createOffer({ offerToReceiveVideo: true })
@@ -198,7 +209,7 @@ export class AppComponent {
           event.streams[0].getAudioTracks()[0].enabled = false;
         }
         handleRemoteStreamAdded(event.streams[0], id, isHost, roomMemberName);
-      }
+      };
 
       peerConnection
         .setRemoteDescription(description)
@@ -304,9 +315,104 @@ export class AppComponent {
       .getRemoteStreams()[0]
       .getTracks()
       .map((track) => {
-        if (track.kind === "audio") {
+        if (track.kind === 'audio') {
           track.enabled = !track.enabled;
         }
       });
   };
+
+  startRecording = () => {
+    this.recordedBlobs = [];
+    let options = { mimeType: 'video/webm;codecs=vp9,opus' };
+    // if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+    //   console.error(`${options.mimeType} is not supported`);
+    //   options = { mimeType: 'video/webm;codecs=vp8,opus' };
+    //   if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+    //     console.error(`${options.mimeType} is not supported`);
+    //     options = { mimeType: 'video/webm' };
+    //     if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+    //       console.error(`${options.mimeType} is not supported`);
+    //       options = { mimeType: '' };
+    //     }
+    //   }
+    // }
+
+    try {
+      this.mediaRecorder = new MediaRecorder(this.hostDetails.stream, options);
+    } catch (e) {
+      console.error(`Exception while creating MediaRecorder:  ${JSON.stringify(e)}`);
+      return;
+    }
+
+    console.log(
+      'Created MediaRecorder',
+      this.mediaRecorder,
+      'with options',
+      options
+    );
+    this.mediaRecorder.onstop = (event) => {
+      console.log('Recorder stopped: ', event);
+      console.log('Recorded Blobs: ', this.recordedBlobs);
+      const superBuffer = new Blob(this.recordedBlobs, {type: 'video/webm'});
+      this.recordedVideo.nativeElement.src = window.URL.createObjectURL(superBuffer);
+      this.recordedVideo.nativeElement.play();
+    };
+    this.mediaRecorder.ondataavailable = this.handleDataAvailable;
+    this.mediaRecorder.start();
+    console.log('MediaRecorder started', this.mediaRecorder);
+  };
+
+  handleDataAvailable = (event) => {
+    console.log('media record ondataavailable', event);
+    if (event.data && event.data.size > 0) {
+      this.recordedBlobs.push(event.data);
+    }
+  }
+
+  stopRecording = () => {
+    this.mediaRecorder.stop();
+  };
+
+  onVideoDownload = () => {    
+    const file = new File(this.recordedBlobs, 'test.webm', {
+      type: 'video/webm',
+      lastModified: Date.now()
+    });  
+
+    var reader = new FileReader();
+    reader.readAsDataURL(file);
+
+    reader.onload = function(e){
+      var encrypted = CryptoJS.AES.encrypt(e.target.result as string, "123test");
+      const a = document.createElement('a');
+      a.href = 'data:application/octet-stream,' + encrypted;
+      a.download = file.name + '.encrypted';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+      }, 100);
+    };
+  }
+
+  onVideoUpload = (e) => {  
+
+    const file = e.target.files[0];
+
+    var reader = new FileReader();
+    reader.readAsText(file);
+    var decrypted;
+    reader.onload = (e) => {
+      decrypted = CryptoJS.AES.decrypt(e.target.result as string, "123test")
+                  .toString(CryptoJS.enc.Latin1);
+
+      if(!/^data:/.test(decrypted)){
+        alert("Invalid pass phrase or file! Please try again.");
+        return false;        
+      }
+      this.uploadVideo.nativeElement.src = decrypted;
+    };
+        
+    
+  }
 }
