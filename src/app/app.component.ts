@@ -256,6 +256,7 @@ export class AppComponent {
       const mediaDevices = navigator.mediaDevices as any;
       const screenCaptureStream = await mediaDevices.getDisplayMedia();
 
+      this.hostDetails.stream = screenCaptureStream;
       Object.keys(this.peerConnections).map((peerconnection) => {
         this.peerConnections[peerconnection].getSenders().map((sender) => {
           if (sender.track.kind === 'video') {
@@ -273,6 +274,7 @@ export class AppComponent {
       const videoStream = await navigator.mediaDevices.getUserMedia(
         this.roomMemberConstraints
       );
+      this.hostDetails.stream = videoStream;
       Object.keys(this.peerConnections).map((peerconnection) => {
         this.peerConnections[peerconnection].getSenders().map((sender) => {
           if (sender.track.kind === 'video') {
